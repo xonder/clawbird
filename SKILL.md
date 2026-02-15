@@ -2,19 +2,18 @@
 name: clawbird
 description: "X/Twitter integration — post, reply, search, like, follow, DMs, and mentions via the official X API v2"
 homepage: https://github.com/xonder/clawbird
-requires:
-  env:
-    - name: X_API_KEY
-      description: "X API Key (OAuth 1.0a consumer key) from developer.x.com"
-    - name: X_API_SECRET
-      description: "X API Secret (OAuth 1.0a consumer secret)"
-    - name: X_ACCESS_TOKEN
-      description: "X Access Token for your account"
-    - name: X_ACCESS_SECRET
-      description: "X Access Token Secret for your account"
-    - name: X_BEARER_TOKEN
-      description: "X Bearer Token (optional — used for read-only operations)"
-      required: false
+metadata:
+  openclaw:
+    emoji: "🐦"
+    requires:
+      plugins: ["clawbird"]
+      env: ["X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_SECRET"]
+    primaryEnv: "X_API_KEY"
+    install:
+      - id: "npm"
+        kind: "node"
+        package: "@xonder/clawbird"
+        label: "Install clawbird plugin (npm)"
 ---
 
 # Clawbird — X/Twitter Tools
