@@ -32,7 +32,7 @@ describe("clawbird plugin entry point", () => {
 
     clawbird(api);
 
-    expect(registeredTools).toHaveLength(10);
+    expect(registeredTools).toHaveLength(11);
     expect(registeredTools).toContain("x_post_tweet");
     expect(registeredTools).toContain("x_post_thread");
     expect(registeredTools).toContain("x_reply_tweet");
@@ -42,6 +42,7 @@ describe("clawbird plugin entry point", () => {
     expect(registeredTools).toContain("x_get_mentions");
     expect(registeredTools).toContain("x_send_dm");
     expect(registeredTools).toContain("x_get_dms");
+    expect(registeredTools).toContain("x_follow_user");
     expect(registeredTools).toContain("x_get_cost_summary");
   });
 
@@ -99,6 +100,6 @@ describe("clawbird plugin entry point", () => {
 
     // Should not throw — clients are created lazily on first tool execution
     expect(() => clawbird(api)).not.toThrow();
-    expect(api.registerTool).toHaveBeenCalledTimes(10);
+    expect(api.registerTool).toHaveBeenCalledTimes(11);
   });
 });

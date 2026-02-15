@@ -5,7 +5,7 @@ description: Interact with X/Twitter — post tweets, threads, replies, search, 
 
 # Clawbird — X/Twitter Tools
 
-You have access to 10 tools for interacting with X (Twitter). All tools return JSON with results and estimated API cost.
+You have access to 11 tools for interacting with X (Twitter). All tools return JSON with results and estimated API cost.
 
 ## Available Tools
 
@@ -59,6 +59,12 @@ You have access to 10 tools for interacting with X (Twitter). All tools return J
 - Use `"exact phrase"` for exact matches
 - Combine operators: `#AI from:openai -is:retweet lang:en`
 - Use `-is:retweet` to filter out retweets
+
+### Social
+
+**`x_follow_user`** — Follow a user.
+- `username` (required): Username to follow (with or without `@`)
+- Returns: `{ following, user: { id, username }, estimatedCost }`
 
 ### Direct Messages
 
