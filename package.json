@@ -1,5 +1,5 @@
 {
-  "name": "clawbird",
+  "name": "@xonder/clawbird",
   "version": "0.1.0",
   "description": "OpenClaw plugin for X/Twitter — post, reply, search, like, and monitor mentions",
   "type": "module",
