@@ -9,6 +9,7 @@ import { getMentionsSchema } from "../src/tools/get-mentions.js";
 import { sendDmSchema } from "../src/tools/send-dm.js";
 import { getDmsSchema } from "../src/tools/get-dms.js";
 import { followUserSchema } from "../src/tools/follow-user.js";
+import { getTweetSchema } from "../src/tools/get-tweet.js";
 import { getCostSummarySchema } from "../src/tools/get-cost-summary.js";
 
 /**
@@ -27,6 +28,7 @@ describe("Tool parameter schemas", () => {
     { name: "x_send_dm", schema: sendDmSchema },
     { name: "x_get_dms", schema: getDmsSchema },
     { name: "x_follow_user", schema: followUserSchema },
+    { name: "x_get_tweet", schema: getTweetSchema },
     { name: "x_get_cost_summary", schema: getCostSummarySchema },
   ];
 
