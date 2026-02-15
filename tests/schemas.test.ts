@@ -6,6 +6,8 @@ import { likeTweetSchema } from "../src/tools/like-tweet.js";
 import { searchTweetsSchema } from "../src/tools/search-tweets.js";
 import { getUserProfileSchema } from "../src/tools/get-user-profile.js";
 import { getMentionsSchema } from "../src/tools/get-mentions.js";
+import { sendDmSchema } from "../src/tools/send-dm.js";
+import { getDmsSchema } from "../src/tools/get-dms.js";
 import { getCostSummarySchema } from "../src/tools/get-cost-summary.js";
 
 /**
@@ -21,6 +23,8 @@ describe("Tool parameter schemas", () => {
     { name: "x_search_tweets", schema: searchTweetsSchema },
     { name: "x_get_user_profile", schema: getUserProfileSchema },
     { name: "x_get_mentions", schema: getMentionsSchema },
+    { name: "x_send_dm", schema: sendDmSchema },
+    { name: "x_get_dms", schema: getDmsSchema },
     { name: "x_get_cost_summary", schema: getCostSummarySchema },
   ];
 
@@ -91,6 +95,22 @@ describe("Tool parameter schemas", () => {
     it("requires username", () => {
       expect(getUserProfileSchema.required).toContain("username");
       expect(getUserProfileSchema.properties.username.type).toBe("string");
+    });
+  });
+
+  describe("x_send_dm schema details", () => {
+    it("requires username and text", () => {
+      expect(sendDmSchema.required).toContain("username");
+      expect(sendDmSchema.required).toContain("text");
+      expect(sendDmSchema.properties.username.type).toBe("string");
+      expect(sendDmSchema.properties.text.type).toBe("string");
+    });
+  });
+
+  describe("x_get_dms schema details", () => {
+    it("has no required fields (all optional)", () => {
+      expect(getDmsSchema.required ?? []).not.toContain("username");
+      expect(getDmsSchema.required ?? []).not.toContain("maxResults");
     });
   });
 

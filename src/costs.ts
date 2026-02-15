@@ -8,6 +8,8 @@ export const ACTION_COSTS = {
   like: 0.005,
   user_lookup: 0.001,
   mention_per_result: 0.005,
+  dm_send: 0.01,
+  dm_read_per_result: 0.005,
 } as const;
 
 export type ActionType = keyof typeof ACTION_COSTS;

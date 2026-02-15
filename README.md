@@ -66,7 +66,7 @@ If plugin config is not set, Clawbird falls back to these environment variables:
 
 ## Agent Tools
 
-Clawbird registers 8 agent tools, all prefixed with `x_`:
+Clawbird registers 10 agent tools, all prefixed with `x_`:
 
 | Tool | Description | Auth | Est. Cost |
 |------|-------------|------|-----------|
@@ -77,6 +77,8 @@ Clawbird registers 8 agent tools, all prefixed with `x_`:
 | `x_search_tweets` | Search recent tweets (7 days) | Bearer | ~$0.005/result |
 | `x_get_user_profile` | Get user profile by username | Bearer | $0.001 |
 | `x_get_mentions` | Get mentions of your account | OAuth1 | ~$0.005/result |
+| `x_send_dm` | Send a direct message to a user | OAuth1 | $0.01 |
+| `x_get_dms` | Get recent direct messages | OAuth1 | ~$0.005/result |
 | `x_get_cost_summary` | Get cumulative session API costs | — | Free |
 
 ### Tool Parameters
@@ -116,6 +118,17 @@ Accepts tweet IDs or full URLs (`https://x.com/user/status/1234567890`).
 ```json
 { "maxResults": 20 }
 ```
+
+**`x_send_dm`**
+```json
+{ "username": "@alice", "text": "Hey, check out our latest release!" }
+```
+
+**`x_get_dms`**
+```json
+{ "username": "@alice", "maxResults": 20 }
+```
+Omit `username` to get all recent DMs.
 
 **`x_get_cost_summary`** — No parameters needed.
 ```json

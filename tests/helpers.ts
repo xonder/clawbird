@@ -52,6 +52,16 @@ export function createMockClient() {
       getFollowers: vi.fn(),
       getFollowing: vi.fn(),
     },
+    directMessages: {
+      createByParticipantId: vi.fn(),
+      createByConversationId: vi.fn(),
+      createConversation: vi.fn(),
+      getEventsByParticipantId: vi.fn(),
+      getEventsByConversationId: vi.fn(),
+      getEvents: vi.fn(),
+      getEventsById: vi.fn(),
+      deleteEvents: vi.fn(),
+    },
   };
 
   return client;
