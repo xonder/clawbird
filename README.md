@@ -66,7 +66,7 @@ If plugin config is not set, Clawbird falls back to these environment variables:
 
 ## Agent Tools
 
-Clawbird registers 7 agent tools, all prefixed with `x_`:
+Clawbird registers 8 agent tools, all prefixed with `x_`:
 
 | Tool | Description | Auth | Est. Cost |
 |------|-------------|------|-----------|
@@ -77,6 +77,7 @@ Clawbird registers 7 agent tools, all prefixed with `x_`:
 | `x_search_tweets` | Search recent tweets (7 days) | Bearer | ~$0.005/result |
 | `x_get_user_profile` | Get user profile by username | Bearer | $0.001 |
 | `x_get_mentions` | Get mentions of your account | OAuth1 | ~$0.005/result |
+| `x_get_cost_summary` | Get cumulative session API costs | — | Free |
 
 ### Tool Parameters
 
@@ -115,6 +116,12 @@ Accepts tweet IDs or full URLs (`https://x.com/user/status/1234567890`).
 ```json
 { "maxResults": 20 }
 ```
+
+**`x_get_cost_summary`** — No parameters needed.
+```json
+{}
+```
+Returns total session cost and per-action breakdown.
 
 ### Cost Tracking
 
@@ -168,7 +175,7 @@ clawbird/
 │       └── get-mentions.ts
 ├── skills/clawbird/
 │   └── SKILL.md            # Agent instructions
-└── tests/                  # Vitest test suite (96 tests)
+└── tests/                  # Vitest test suite
 ```
 
 ## License

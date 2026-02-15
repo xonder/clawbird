@@ -8,18 +8,20 @@ import { registerLikeTweet } from "./tools/like-tweet.js";
 import { registerSearchTweets } from "./tools/search-tweets.js";
 import { registerGetUserProfile } from "./tools/get-user-profile.js";
 import { registerGetMentions } from "./tools/get-mentions.js";
+import { registerGetCostSummary } from "./tools/get-cost-summary.js";
 
 /**
  * OpenClaw plugin entry point.
  *
- * Registers 7 agent tools for interacting with X/Twitter:
- *   - x_post_tweet      — Post a single tweet
- *   - x_post_thread     — Post a multi-tweet thread
- *   - x_reply_tweet     — Reply to a tweet by ID/URL
- *   - x_like_tweet      — Like a tweet
- *   - x_search_tweets   — Search recent tweets
+ * Registers 8 agent tools for interacting with X/Twitter:
+ *   - x_post_tweet       — Post a single tweet
+ *   - x_post_thread      — Post a multi-tweet thread
+ *   - x_reply_tweet      — Reply to a tweet by ID/URL
+ *   - x_like_tweet       — Like a tweet
+ *   - x_search_tweets    — Search recent tweets
  *   - x_get_user_profile — Get user profile by username
- *   - x_get_mentions    — Get mentions of your account
+ *   - x_get_mentions     — Get mentions of your account
+ *   - x_get_cost_summary — Get cumulative API cost summary
  */
 export default function clawbird(api: {
   pluginConfig?: Partial<ClawbirdConfig>;
@@ -52,4 +54,5 @@ export default function clawbird(api: {
   registerSearchTweets(api, getReadClient);
   registerGetUserProfile(api, getReadClient);
   registerGetMentions(api, getReadClient, getWriteClient);
+  registerGetCostSummary(api);
 }

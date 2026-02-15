@@ -6,6 +6,7 @@ import { likeTweetSchema } from "../src/tools/like-tweet.js";
 import { searchTweetsSchema } from "../src/tools/search-tweets.js";
 import { getUserProfileSchema } from "../src/tools/get-user-profile.js";
 import { getMentionsSchema } from "../src/tools/get-mentions.js";
+import { getCostSummarySchema } from "../src/tools/get-cost-summary.js";
 
 /**
  * Verify that all tool parameter schemas produce valid JSON Schema objects
@@ -20,6 +21,7 @@ describe("Tool parameter schemas", () => {
     { name: "x_search_tweets", schema: searchTweetsSchema },
     { name: "x_get_user_profile", schema: getUserProfileSchema },
     { name: "x_get_mentions", schema: getMentionsSchema },
+    { name: "x_get_cost_summary", schema: getCostSummarySchema },
   ];
 
   for (const { name, schema } of schemas) {

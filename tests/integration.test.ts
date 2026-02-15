@@ -45,7 +45,7 @@ describe("Integration: plugin registration and tool invocation", () => {
     };
 
     clawbird(api);
-    expect(tools.size).toBe(7);
+    expect(tools.size).toBe(8);
 
     // Invoking any tool should fail with a credential error (lazy init fires)
     const postTweet = tools.get("x_post_tweet")!;

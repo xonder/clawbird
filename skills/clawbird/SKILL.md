@@ -5,7 +5,7 @@ description: Interact with X/Twitter — post tweets, threads, replies, search, 
 
 # Clawbird — X/Twitter Tools
 
-You have access to 7 tools for interacting with X (Twitter). All tools return JSON with results and estimated API cost.
+You have access to 8 tools for interacting with X (Twitter). All tools return JSON with results and estimated API cost.
 
 ## Available Tools
 
@@ -59,6 +59,14 @@ You have access to 7 tools for interacting with X (Twitter). All tools return JS
 - Use `"exact phrase"` for exact matches
 - Combine operators: `#AI from:openai -is:retweet lang:en`
 - Use `-is:retweet` to filter out retweets
+
+### Cost Summary
+
+**`x_get_cost_summary`** — Get cumulative API cost for this session.
+- No parameters required
+- Returns: `{ totalCost, breakdown: { [action]: { calls, totalCost } } }`
+
+Use this to check how much the current session has spent before performing more expensive operations.
 
 ### Cost Awareness
 Every tool response includes an `estimatedCost` field. Approximate costs:
