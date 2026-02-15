@@ -29,7 +29,7 @@ This plugin authenticates to the X API using **OAuth 1.0a User Context** for wri
 2. Generate OAuth 1.0a keys: API Key, API Secret, Access Token, Access Token Secret
 3. Optionally generate a Bearer Token for read-only operations
 
-**How credentials are stored:** Credentials are configured in OpenClaw's plugin config at `plugins.entries.clawbird.config` in `~/.openclaw/openclaw.json`. They are never written to disk by the plugin itself. Fallback: environment variables `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_SECRET`, `X_BEARER_TOKEN`.
+**How credentials are provided:** Credentials are passed to the plugin at runtime by the OpenClaw plugin config system (`pluginConfig`). The plugin never reads config files directly. Fallback: environment variables `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_SECRET`, `X_BEARER_TOKEN`.
 
 **No credentials are hardcoded or bundled.** The plugin will return a clear error if credentials are missing.
 
@@ -61,11 +61,16 @@ All network requests go exclusively to the official X API v2. No other hosts are
 
 ## Trust Statement
 
-Clawbird is open-source (MIT) at https://github.com/xonder/clawbird. All source code is auditable. The plugin:
-- Makes **no network requests** other than to `api.x.com`
-- Reads and writes **one local file** (`clawbird-interactions.jsonl`) for session interaction logging — no other filesystem access
+Clawbird is an npm-distributed skill — the runtime code is installed via `npm i -g @xonder/clawbird` and is not bundled in the ClawHub skill archive. The security properties below can be verified by auditing the source:
+
+- **Source:** https://github.com/xonder/clawbird (MIT)
+- **npm:** https://www.npmjs.com/package/@xonder/clawbird
+- Makes **no network requests** other than to `api.x.com` ([source: `src/client.ts`](https://github.com/xonder/clawbird/blob/main/src/client.ts))
+- Reads and writes **one local file** (`clawbird-interactions.jsonl`) for session interaction logging — no other filesystem access ([source: `src/interaction-log.ts`](https://github.com/xonder/clawbird/blob/main/src/interaction-log.ts))
 - Has **zero transitive dependencies** beyond the official `@xdevplatform/xdk` SDK and `@sinclair/typebox`
-- Includes a comprehensive test suite (180+ tests) verifiable via `npm test`
+- Includes a comprehensive test suite (200+ tests) verifiable via `npm test`
+
+Since this skill installs code from npm at runtime, **review the source or pin a specific version** (`npm i -g @xonder/clawbird@1.1.0`) before granting credentials.
 
 ## Write Actions & Autonomous Use
 
