@@ -1,11 +1,88 @@
 ---
 name: clawbird
-description: Interact with X/Twitter — post tweets, threads, replies, search, like, and monitor mentions
+description: "X/Twitter integration — post, reply, search, like, follow, DMs, and mentions via the official X API v2"
+homepage: https://github.com/xonder/clawbird
+requires:
+  env:
+    - name: X_API_KEY
+      description: "X API Key (OAuth 1.0a consumer key) from developer.x.com"
+    - name: X_API_SECRET
+      description: "X API Secret (OAuth 1.0a consumer secret)"
+    - name: X_ACCESS_TOKEN
+      description: "X Access Token for your account"
+    - name: X_ACCESS_SECRET
+      description: "X Access Token Secret for your account"
+    - name: X_BEARER_TOKEN
+      description: "X Bearer Token (optional — used for read-only operations)"
+      required: false
 ---
 
 # Clawbird — X/Twitter Tools
 
-You have access to 12 tools for interacting with X (Twitter). All tools return JSON with results and estimated API cost.
+You have access to 12 tools for interacting with X (Twitter) via the official X API v2. All tools return JSON with results and estimated API cost.
+
+## Authentication & Credentials
+
+This plugin authenticates to the X API using **OAuth 1.0a User Context** for write operations (posting, liking, following, DMs) and optionally a **Bearer Token** for read-only operations (search, user lookup).
+
+**Where credentials come from:** You must generate them at the [X Developer Portal](https://developer.x.com):
+1. Create a Project and App at developer.x.com
+2. Generate OAuth 1.0a keys: API Key, API Secret, Access Token, Access Token Secret
+3. Optionally generate a Bearer Token for read-only operations
+
+**How credentials are stored:** Credentials are configured in OpenClaw's plugin config at `plugins.entries.clawbird.config` in `~/.openclaw/openclaw.json`. They are never written to disk by the plugin itself. Fallback: environment variables `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_SECRET`, `X_BEARER_TOKEN`.
+
+**No credentials are hardcoded or bundled.** The plugin will return a clear error if credentials are missing.
+
+## External Endpoints
+
+All network requests go exclusively to the official X API v2. No other hosts are contacted.
+
+| Endpoint | Method | Tool(s) | Data Sent |
+|----------|--------|---------|-----------|
+| `https://api.x.com/2/tweets` | POST | x_post_tweet, x_post_thread, x_reply_tweet | Tweet text, reply metadata |
+| `https://api.x.com/2/tweets/:id` | GET | x_get_tweet | Tweet ID |
+| `https://api.x.com/2/tweets/search/recent` | GET | x_search_tweets | Search query string |
+| `https://api.x.com/2/users/me` | GET | x_like_tweet, x_get_mentions, x_follow_user | (auth headers only) |
+| `https://api.x.com/2/users/by/username/:username` | GET | x_get_user_profile, x_send_dm, x_follow_user | Username |
+| `https://api.x.com/2/users/:id/likes` | POST | x_like_tweet | Tweet ID |
+| `https://api.x.com/2/users/:id/mentions` | GET | x_get_mentions | User ID, pagination params |
+| `https://api.x.com/2/users/:id/following` | POST | x_follow_user | Target user ID |
+| `https://api.x.com/2/dm_conversations/with/:id/messages` | POST | x_send_dm | Message text, recipient ID |
+| `https://api.x.com/2/dm_conversations/with/:id/dm_events` | GET | x_get_dms (filtered) | Participant ID |
+| `https://api.x.com/2/dm_events` | GET | x_get_dms (all) | Pagination params |
+
+## Security & Privacy
+
+- **Network access:** Only `api.x.com` (official X API). No other domains are contacted.
+- **Local file access:** None. This plugin does not read, write, or access any local files, environment config, or system resources beyond the declared environment variables.
+- **Credential handling:** OAuth tokens are read from plugin config or env vars at runtime and passed to the X API via signed HTTP headers. They are never logged, cached to disk, or transmitted to any third party.
+- **Data sent to X:** Only the data you explicitly provide in tool parameters (tweet text, search queries, usernames, message text). No additional user data is collected or sent.
+- **Data received from X:** Tweet content, user profiles, DM messages, and engagement metrics as returned by the X API. This data is returned to the agent as JSON and not stored.
+
+## Trust Statement
+
+Clawbird is open-source (MIT) at https://github.com/xonder/clawbird. All source code is auditable. The plugin:
+- Makes **no network requests** other than to `api.x.com`
+- Reads **no local files** (no filesystem access)
+- Stores **no data** to disk
+- Has **zero transitive dependencies** beyond the official `@xdevplatform/xdk` SDK and `@sinclair/typebox`
+- Includes a comprehensive test suite (180+ tests) verifiable via `npm test`
+
+## Write Actions & Autonomous Use
+
+The following tools **modify remote state** on your X account:
+
+| Tool | Action | Reversible? |
+|------|--------|-------------|
+| x_post_tweet | Posts a tweet | Delete manually |
+| x_post_thread | Posts multiple tweets | Delete manually |
+| x_reply_tweet | Posts a reply | Delete manually |
+| x_like_tweet | Likes a tweet | Unlike manually |
+| x_follow_user | Follows a user | Unfollow manually |
+| x_send_dm | Sends a direct message | Cannot unsend |
+
+**Recommendation:** If running autonomously, consider requiring explicit user confirmation before write actions by configuring agent-level tool policies. Read-only tools (x_get_tweet, x_search_tweets, x_get_user_profile, x_get_mentions, x_get_dms, x_get_cost_summary) are safe for autonomous use.
 
 ## Available Tools
 
@@ -30,6 +107,12 @@ You have access to 12 tools for interacting with X (Twitter). All tools return J
 - `tweetId` (required): Tweet ID or full URL
 - Returns: `{ liked, tweetId, estimatedCost }`
 
+### Social
+
+**`x_follow_user`** — Follow a user.
+- `username` (required): Username to follow (with or without `@`)
+- Returns: `{ following, user: { id, username }, estimatedCost }`
+
 ### Research
 
 **`x_get_tweet`** — Get a single tweet by ID or URL.
@@ -45,30 +128,9 @@ You have access to 12 tools for interacting with X (Twitter). All tools return J
 - `username` (required): Username with or without `@`
 - Returns: `{ id, name, username, description, followersCount, followingCount, tweetCount, verified, profileImageUrl, url, createdAt, location, profileUrl, estimatedCost }`
 
-**`x_get_mentions`** — Get recent mentions of our account.
+**`x_get_mentions`** — Get recent mentions of the authenticated account.
 - `maxResults` (optional): 5–100, default 10
 - Returns: `{ resultCount, mentions: [{ id, text, authorId, createdAt, metrics, url }], estimatedCost }`
-
-## Best Practices
-
-### Thread Formatting
-- Keep each tweet under 280 characters
-- Start with a strong hook in tweet 1
-- Number tweets (1/N) for long threads
-- End with a call to action or summary
-
-### Search Queries
-- Use `from:username` to search a specific user's tweets
-- Use `#hashtag` for hashtag search
-- Use `"exact phrase"` for exact matches
-- Combine operators: `#AI from:openai -is:retweet lang:en`
-- Use `-is:retweet` to filter out retweets
-
-### Social
-
-**`x_follow_user`** — Follow a user.
-- `username` (required): Username to follow (with or without `@`)
-- Returns: `{ following, user: { id, username }, estimatedCost }`
 
 ### Direct Messages
 
@@ -82,13 +144,26 @@ You have access to 12 tools for interacting with X (Twitter). All tools return J
 - `maxResults` (optional): 1–100, default 10
 - Returns: `{ resultCount, messages: [{ id, text, senderId, createdAt, conversationId, eventType }], estimatedCost }`
 
-### Cost Summary
+### Utility
 
 **`x_get_cost_summary`** — Get cumulative API cost for this session.
 - No parameters required
 - Returns: `{ totalCost, breakdown: { [action]: { calls, totalCost } } }`
 
-Use this to check how much the current session has spent before performing more expensive operations.
+## Best Practices
+
+### Search Queries
+- Use `from:username` to search a specific user's tweets
+- Use `#hashtag` for hashtag search
+- Use `"exact phrase"` for exact matches
+- Combine operators: `#AI from:openai -is:retweet lang:en`
+- Use `-is:retweet` to filter out retweets
+
+### Thread Formatting
+- Keep each tweet under 280 characters
+- Start with a strong hook in tweet 1
+- Number tweets (1/N) for long threads
+- End with a call to action or summary
 
 ### Cost Awareness
 Every tool response includes an `estimatedCost` field. Approximate costs:
@@ -99,6 +174,9 @@ Every tool response includes an `estimatedCost` field. Approximate costs:
 - Mentions: ~$0.005 per result
 - Send DM: ~$0.01
 - Read DMs: ~$0.005 per result
+- Get tweet: ~$0.005
+
+Use `x_get_cost_summary` to check cumulative session spend before expensive operations.
 
 ### Rate Limits
 - Posting: 200 tweets per 15 minutes
@@ -107,6 +185,7 @@ Every tool response includes an `estimatedCost` field. Approximate costs:
 - User lookup: 900 per 15 minutes
 - Mentions: 180 per 15 minutes
 - DMs: 200 messages per 15 minutes, 1000 per 24 hours
+- Following: 400 per 24 hours
 
 ### Error Handling
 All tools return errors as `{ error: "message", details?: ... }`. Common issues:
