@@ -66,7 +66,7 @@ If plugin config is not set, Clawbird falls back to these environment variables:
 
 ## Agent Tools
 
-Clawbird registers 11 agent tools, all prefixed with `x_`:
+Clawbird registers 12 agent tools, all prefixed with `x_`:
 
 | Tool | Description | Auth | Est. Cost |
 |------|-------------|------|-----------|
@@ -74,6 +74,7 @@ Clawbird registers 11 agent tools, all prefixed with `x_`:
 | `x_post_thread` | Post a multi-tweet thread | OAuth1 | $0.01/tweet |
 | `x_reply_tweet` | Reply to a tweet by ID or URL | OAuth1 | $0.01 |
 | `x_like_tweet` | Like a tweet by ID or URL | OAuth1 | $0.005 |
+| `x_get_tweet` | Get a single tweet by ID or URL | Bearer | $0.005 |
 | `x_search_tweets` | Search recent tweets (7 days) | Bearer | ~$0.005/result |
 | `x_get_user_profile` | Get user profile by username | Bearer | $0.001 |
 | `x_get_mentions` | Get mentions of your account | OAuth1 | ~$0.005/result |
@@ -119,6 +120,12 @@ Accepts tweet IDs or full URLs (`https://x.com/user/status/1234567890`).
 ```json
 { "maxResults": 20 }
 ```
+
+**`x_get_tweet`**
+```json
+{ "tweetId": "https://x.com/Pauline_Cx/status/2022729815242215865" }
+```
+Also accepts bare tweet IDs: `{ "tweetId": "2022729815242215865" }`
 
 **`x_follow_user`**
 ```json

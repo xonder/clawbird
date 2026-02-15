@@ -5,7 +5,7 @@ description: Interact with X/Twitter — post tweets, threads, replies, search, 
 
 # Clawbird — X/Twitter Tools
 
-You have access to 11 tools for interacting with X (Twitter). All tools return JSON with results and estimated API cost.
+You have access to 12 tools for interacting with X (Twitter). All tools return JSON with results and estimated API cost.
 
 ## Available Tools
 
@@ -31,6 +31,10 @@ You have access to 11 tools for interacting with X (Twitter). All tools return J
 - Returns: `{ liked, tweetId, estimatedCost }`
 
 ### Research
+
+**`x_get_tweet`** — Get a single tweet by ID or URL.
+- `tweetId` (required): Tweet ID or full URL (e.g. `https://x.com/user/status/123456`)
+- Returns: `{ id, text, authorId, createdAt, metrics, conversationId, lang, url, author: { id, name, username, verified, profileImageUrl }, estimatedCost }`
 
 **`x_search_tweets`** — Search recent tweets (last 7 days).
 - `query` (required): Search query — supports X operators like `from:user`, `#hashtag`, `"exact phrase"`, `-exclude`, `lang:en`
