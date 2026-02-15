@@ -13,7 +13,7 @@
   },
   "files": [
     "dist",
-    "skills",
+    "SKILL.md",
     "openclaw.plugin.json",
     "README.md"
   ],
@@ -34,6 +34,11 @@
     "x",
     "social-media"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xonder/clawbird.git"
+  },
+  "author": "xonder",
   "license": "MIT",
   "openclaw": {
     "extensions": ["./dist/index.js"]

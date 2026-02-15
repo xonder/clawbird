@@ -3,7 +3,7 @@
   "name": "Clawbird",
   "version": "1.0.0",
   "description": "X/Twitter integration for OpenClaw — post, reply, search, like, follow, DMs, and mentions via the official X API v2",
-  "skills": ["skills/clawbird"],
+  "skills": ["."],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

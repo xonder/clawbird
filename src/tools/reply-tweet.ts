@@ -2,6 +2,7 @@ import { Type } from "@sinclair/typebox";
 import type { Client } from "@xdevplatform/xdk";
 import { ok, err, tweetUrl, parseTweetId } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
+import { parseRateLimitError } from "../rate-limit.js";
 
 export const replyTweetSchema = Type.Object({
   tweetId: Type.String({
@@ -48,6 +49,8 @@ export async function executeReplyTweet(
       estimatedCost: `$${cost.toFixed(4)}`,
     });
   } catch (error: unknown) {
+    const rateLimitErr = parseRateLimitError(error);
+    if (rateLimitErr) return ok(rateLimitErr);
     const message = error instanceof Error ? error.message : String(error);
     return err(`Failed to reply to tweet: ${message}`);
   }

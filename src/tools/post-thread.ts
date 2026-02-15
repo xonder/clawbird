@@ -2,6 +2,7 @@ import { Type } from "@sinclair/typebox";
 import type { Client } from "@xdevplatform/xdk";
 import { ok, err, tweetUrl } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
+import { parseRateLimitError } from "../rate-limit.js";
 
 export const postThreadSchema = Type.Object({
   tweets: Type.Array(Type.String({ description: "Text content of each tweet in the thread" }), {
@@ -59,6 +60,8 @@ export async function executePostThread(
       estimatedCost: `$${cost.toFixed(4)}`,
     });
   } catch (error: unknown) {
+    const rateLimitErr = parseRateLimitError(error);
+    if (rateLimitErr) return ok(rateLimitErr);
     const message = error instanceof Error ? error.message : String(error);
     return err(`Failed to post thread: ${message}`);
   }

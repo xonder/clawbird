@@ -3,6 +3,7 @@ import type { Client } from "@xdevplatform/xdk";
 import { ok, err, tweetUrl } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { getAuthenticatedUserId } from "../client.js";
+import { parseRawResponse, formatRateLimit, parseRateLimitError } from "../rate-limit.js";
 
 export const getMentionsSchema = Type.Object({
   maxResults: Type.Optional(
@@ -25,20 +26,23 @@ export async function executeGetMentions(
     // Need user ID — use writeClient (OAuth1) to get authenticated user
     const userId = await getAuthenticatedUserId(writeClient);
 
-    const response = await readClient.users.getMentions(userId, {
+    const rawResponse = await readClient.users.getMentions(userId, {
       maxResults,
       tweetFields: ["created_at", "author_id", "public_metrics", "conversation_id"],
-    });
+      requestOptions: { raw: true },
+    }) as unknown as Response;
 
-    const mentions =
-      response?.data?.map((tweet) => ({
-        id: tweet.id,
-        text: tweet.text,
-        authorId: tweet.authorId,
-        createdAt: tweet.createdAt,
-        metrics: tweet.publicMetrics,
-        url: tweetUrl(tweet.id as string),
-      })) ?? [];
+    const { data: response, rateLimit } = await parseRawResponse<Record<string, unknown>>(rawResponse);
+
+    const mentionsData = (response?.data ?? []) as Array<Record<string, unknown>>;
+    const mentions = mentionsData.map((tweet) => ({
+      id: tweet.id,
+      text: tweet.text,
+      authorId: tweet.author_id,
+      createdAt: tweet.created_at,
+      metrics: tweet.public_metrics,
+      url: tweetUrl(tweet.id as string),
+    }));
 
     const resultCount = mentions.length;
     const cost = ACTION_COSTS.mention_per_result * resultCount;
@@ -47,9 +51,12 @@ export async function executeGetMentions(
     return ok({
       resultCount,
       mentions,
+      rateLimit: formatRateLimit(rateLimit),
       estimatedCost: `$${cost.toFixed(4)}`,
     });
   } catch (error: unknown) {
+    const rateLimitErr = parseRateLimitError(error);
+    if (rateLimitErr) return ok(rateLimitErr);
     const message = error instanceof Error ? error.message : String(error);
     return err(`Failed to get mentions: ${message}`);
   }

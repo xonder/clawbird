@@ -3,6 +3,7 @@ import type { Client } from "@xdevplatform/xdk";
 import { ok, err, normalizeUsername } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { getAuthenticatedUserId } from "../client.js";
+import { parseRateLimitError } from "../rate-limit.js";
 
 export const followUserSchema = Type.Object({
   username: Type.String({
@@ -48,6 +49,8 @@ export async function executeFollowUser(
       estimatedCost: `$${cost.toFixed(4)}`,
     });
   } catch (error: unknown) {
+    const rateLimitErr = parseRateLimitError(error);
+    if (rateLimitErr) return ok(rateLimitErr);
     const message = error instanceof Error ? error.message : String(error);
     return err(`Failed to follow user: ${message}`);
   }

@@ -2,6 +2,7 @@ import { Type } from "@sinclair/typebox";
 import type { Client } from "@xdevplatform/xdk";
 import { ok, err, tweetUrl } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
+import { parseRateLimitError } from "../rate-limit.js";
 
 export const postTweetSchema = Type.Object({
   text: Type.String({ description: "The text content of the tweet (max 280 characters)" }),
@@ -34,6 +35,8 @@ export async function executePostTweet(
       estimatedCost: `$${cost.toFixed(4)}`,
     });
   } catch (error: unknown) {
+    const rateLimitErr = parseRateLimitError(error);
+    if (rateLimitErr) return ok(rateLimitErr);
     const message = error instanceof Error ? error.message : String(error);
     return err(`Failed to post tweet: ${message}`);
   }

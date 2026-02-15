@@ -1,16 +1,28 @@
 # 🐦 Clawbird
 
-**OpenClaw plugin for X/Twitter** — post tweets, threads, replies, search, like, and monitor mentions.
+**OpenClaw plugin for X/Twitter** — post, reply, search, like, follow, DMs, and mentions via the official X API v2.
 
 Built on the official [`@xdevplatform/xdk`](https://github.com/xdevplatform/twitter-api-typescript-sdk) TypeScript SDK.
 
+> **Requires Node.js 18+** — this is a Node/TypeScript plugin installed via npm.
+
 ## Installation
+
+Install from npm:
+
+```bash
+openclaw plugins install @xonder/clawbird
+```
+
+Or from GitHub:
 
 ```bash
 openclaw plugins install github:xonder/clawbird
 ```
 
-Or install locally for development:
+Then restart the Gateway and configure your credentials (see below).
+
+### Local Development
 
 ```bash
 git clone https://github.com/xonder/clawbird.git
@@ -19,8 +31,6 @@ npm install
 npm run build
 openclaw plugins install --link .
 ```
-
-Then restart the Gateway and configure your credentials (see below).
 
 ## Configuration
 
