@@ -1,6 +1,33 @@
 import { vi } from "vitest";
 
 /**
+ * Create a mock Response object simulating a raw API response.
+ * Used for tools that call SDK methods with { requestOptions: { raw: true } }.
+ */
+export function mockRawResponse(
+  body: unknown,
+  rateLimitHeaders?: {
+    remaining?: number;
+    limit?: number;
+    reset?: number;
+  },
+): Response {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+  if (rateLimitHeaders?.remaining !== undefined) {
+    headers["x-rate-limit-remaining"] = String(rateLimitHeaders.remaining);
+  }
+  if (rateLimitHeaders?.limit !== undefined) {
+    headers["x-rate-limit-limit"] = String(rateLimitHeaders.limit);
+  }
+  if (rateLimitHeaders?.reset !== undefined) {
+    headers["x-rate-limit-reset"] = String(rateLimitHeaders.reset);
+  }
+  return new Response(JSON.stringify(body), { status: 200, headers });
+}
+
+/**
  * Create a mock OpenClaw plugin API object that captures tool registrations.
  */
 export function createMockApi() {

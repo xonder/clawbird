@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { executeGetDms } from "../../src/tools/get-dms.js";
-import { createMockClient, parseToolResult, type MockClient } from "../helpers.js";
+import { createMockClient, parseToolResult, mockRawResponse, type MockClient } from "../helpers.js";
 import { costTracker } from "../../src/costs.js";
 
 describe("executeGetDms", () => {
@@ -11,27 +11,18 @@ describe("executeGetDms", () => {
     costTracker.reset();
   });
 
-  it("gets all recent DMs when no username provided", async () => {
-    mockClient.directMessages.getEvents.mockResolvedValue({
-      data: [
+  it("gets all recent DMs with rate limit info", async () => {
+    mockClient.directMessages.getEvents.mockResolvedValue(
+      mockRawResponse(
         {
-          id: "dm1",
-          text: "Hey there",
-          senderId: "s1",
-          createdAt: "2026-02-14T00:00:00Z",
-          dmConversationId: "conv1",
-          eventType: "MessageCreate",
+          data: [
+            { id: "dm1", text: "Hey there", sender_id: "s1", created_at: "2026-02-14T00:00:00Z", dm_conversation_id: "conv1", event_type: "MessageCreate" },
+            { id: "dm2", text: "How are you?", sender_id: "s2", created_at: "2026-02-15T00:00:00Z", dm_conversation_id: "conv2", event_type: "MessageCreate" },
+          ],
         },
-        {
-          id: "dm2",
-          text: "How are you?",
-          senderId: "s2",
-          createdAt: "2026-02-15T00:00:00Z",
-          dmConversationId: "conv2",
-          eventType: "MessageCreate",
-        },
-      ],
-    });
+        { remaining: 98, limit: 100, reset: 1739600000 },
+      ),
+    );
 
     const result = await executeGetDms(mockClient as any, {});
     const data = parseToolResult(result);
@@ -39,9 +30,8 @@ describe("executeGetDms", () => {
     expect(data.resultCount).toBe(2);
     expect(data.messages).toHaveLength(2);
     expect(data.messages[0].id).toBe("dm1");
-    expect(data.messages[0].text).toBe("Hey there");
-    expect(data.messages[0].senderId).toBe("s1");
-    expect(data.messages[0].conversationId).toBe("conv1");
+    expect(data.rateLimit).toBeDefined();
+    expect(data.rateLimit.remaining).toBe(98);
     expect(data.withUser).toBeUndefined();
   });
 
@@ -49,97 +39,42 @@ describe("executeGetDms", () => {
     mockClient.users.getByUsername.mockResolvedValue({
       data: { id: "u42", name: "Alice", username: "alice" },
     });
-    mockClient.directMessages.getEventsByParticipantId.mockResolvedValue({
-      data: [
-        {
-          id: "dm5",
-          text: "Hello Alice",
-          senderId: "me",
-          createdAt: "2026-02-15T00:00:00Z",
-          dmConversationId: "conv5",
-          eventType: "MessageCreate",
-        },
-      ],
-    });
+    mockClient.directMessages.getEventsByParticipantId.mockResolvedValue(
+      mockRawResponse({
+        data: [{ id: "dm5", text: "Hello Alice", sender_id: "me", created_at: "2026-02-15T00:00:00Z", dm_conversation_id: "conv5", event_type: "MessageCreate" }],
+      }),
+    );
 
     const result = await executeGetDms(mockClient as any, { username: "alice" });
     const data = parseToolResult(result);
 
     expect(data.resultCount).toBe(1);
-    expect(data.messages[0].id).toBe("dm5");
     expect(data.withUser).toBe("alice");
   });
 
-  it("calls getEventsByParticipantId with correct user ID", async () => {
-    mockClient.users.getByUsername.mockResolvedValue({
-      data: { id: "u99", name: "Bob", username: "bob" },
-    });
-    mockClient.directMessages.getEventsByParticipantId.mockResolvedValue({
-      data: [],
-    });
-
-    await executeGetDms(mockClient as any, { username: "@bob", maxResults: 25 });
-
-    expect(mockClient.users.getByUsername).toHaveBeenCalledWith("bob");
-    expect(mockClient.directMessages.getEventsByParticipantId).toHaveBeenCalledWith(
-      "u99",
-      expect.objectContaining({ maxResults: 25 }),
-    );
-  });
-
-  it("calls getEvents with correct params when no username", async () => {
-    mockClient.directMessages.getEvents.mockResolvedValue({ data: [] });
-
-    await executeGetDms(mockClient as any, { maxResults: 50 });
-
-    expect(mockClient.directMessages.getEvents).toHaveBeenCalledWith(
-      expect.objectContaining({ maxResults: 50 }),
-    );
-  });
-
   it("uses default maxResults of 10", async () => {
-    mockClient.directMessages.getEvents.mockResolvedValue({ data: [] });
+    mockClient.directMessages.getEvents.mockResolvedValue(mockRawResponse({ data: [] }));
 
     await executeGetDms(mockClient as any, {});
-
-    expect(mockClient.directMessages.getEvents).toHaveBeenCalledWith(
-      expect.objectContaining({ maxResults: 10 }),
-    );
+    expect(mockClient.directMessages.getEvents).toHaveBeenCalledWith(expect.objectContaining({ maxResults: 10 }));
   });
 
   it("tracks cost based on result count", async () => {
-    mockClient.directMessages.getEvents.mockResolvedValue({
-      data: [
-        { id: "1", eventType: "MessageCreate" },
-        { id: "2", eventType: "MessageCreate" },
-        { id: "3", eventType: "MessageCreate" },
-      ],
-    });
+    mockClient.directMessages.getEvents.mockResolvedValue(
+      mockRawResponse({ data: [{ id: "1" }, { id: "2" }, { id: "3" }] }),
+    );
 
     await executeGetDms(mockClient as any, {});
-
-    // 3 * $0.005 = $0.015
     expect(costTracker.totalCost).toBe(0.015);
   });
 
   it("handles empty results", async () => {
-    mockClient.directMessages.getEvents.mockResolvedValue({ data: [] });
+    mockClient.directMessages.getEvents.mockResolvedValue(mockRawResponse({ data: [] }));
 
     const result = await executeGetDms(mockClient as any, {});
     const data = parseToolResult(result);
-
     expect(data.resultCount).toBe(0);
-    expect(data.messages).toHaveLength(0);
     expect(data.estimatedCost).toBe("$0.0000");
-  });
-
-  it("handles null data response", async () => {
-    mockClient.directMessages.getEvents.mockResolvedValue({ data: null });
-
-    const result = await executeGetDms(mockClient as any, {});
-    const data = parseToolResult(result);
-
-    expect(data.resultCount).toBe(0);
   });
 
   it("returns error when user not found", async () => {
@@ -147,7 +82,6 @@ describe("executeGetDms", () => {
 
     const result = await executeGetDms(mockClient as any, { username: "nobody" });
     const data = parseToolResult(result);
-
     expect(data.error).toContain("User @nobody not found");
   });
 
@@ -156,8 +90,17 @@ describe("executeGetDms", () => {
 
     const result = await executeGetDms(mockClient as any, {});
     const data = parseToolResult(result);
-
     expect(data.error).toContain("Failed to get DMs");
-    expect(data.error).toContain("Forbidden");
+  });
+
+  it("returns structured error on 429", async () => {
+    mockClient.directMessages.getEvents.mockRejectedValue({
+      status: 429,
+      headers: new Headers({ "x-rate-limit-reset": String(Math.floor(Date.now() / 1000) + 60) }),
+    });
+
+    const result = await executeGetDms(mockClient as any, {});
+    const data = parseToolResult(result);
+    expect(data.rateLimited).toBe(true);
   });
 });

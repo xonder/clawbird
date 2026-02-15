@@ -2,6 +2,7 @@ import { Type } from "@sinclair/typebox";
 import type { Client } from "@xdevplatform/xdk";
 import { ok, err, normalizeUsername } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
+import { parseRawResponse, formatRateLimit, parseRateLimitError } from "../rate-limit.js";
 
 export const getDmsSchema = Type.Object({
   username: Type.Optional(
@@ -26,7 +27,7 @@ export async function executeGetDms(
   const maxResults = params.maxResults ?? 10;
 
   try {
-    let response;
+    let rawResponse: Response;
 
     if (params.username) {
       const username = normalizeUsername(params.username);
@@ -41,31 +42,35 @@ export async function executeGetDms(
         return err(`User @${username} not found`);
       }
 
-      response = await readClient.directMessages.getEventsByParticipantId(
+      rawResponse = await readClient.directMessages.getEventsByParticipantId(
         userId,
         {
           maxResults,
           dmEventFields: ["created_at", "sender_id", "dm_conversation_id", "text"],
           eventTypes: ["MessageCreate"],
+          requestOptions: { raw: true },
         },
-      );
+      ) as unknown as Response;
     } else {
-      response = await readClient.directMessages.getEvents({
+      rawResponse = await readClient.directMessages.getEvents({
         maxResults,
         dmEventFields: ["created_at", "sender_id", "dm_conversation_id", "text"],
         eventTypes: ["MessageCreate"],
-      });
+        requestOptions: { raw: true },
+      }) as unknown as Response;
     }
 
-    const messages =
-      response?.data?.map((event) => ({
-        id: event.id,
-        text: event.text,
-        senderId: event.senderId,
-        createdAt: event.createdAt,
-        conversationId: event.dmConversationId,
-        eventType: event.eventType,
-      })) ?? [];
+    const { data: response, rateLimit } = await parseRawResponse<Record<string, unknown>>(rawResponse);
+
+    const eventsData = (response?.data ?? []) as Array<Record<string, unknown>>;
+    const messages = eventsData.map((event) => ({
+      id: event.id,
+      text: event.text,
+      senderId: event.sender_id,
+      createdAt: event.created_at,
+      conversationId: event.dm_conversation_id,
+      eventType: event.event_type,
+    }));
 
     const resultCount = messages.length;
     const cost = ACTION_COSTS.dm_read_per_result * resultCount;
@@ -75,9 +80,12 @@ export async function executeGetDms(
       resultCount,
       messages,
       ...(params.username ? { withUser: normalizeUsername(params.username) } : {}),
+      rateLimit: formatRateLimit(rateLimit),
       estimatedCost: `$${cost.toFixed(4)}`,
     });
   } catch (error: unknown) {
+    const rateLimitErr = parseRateLimitError(error);
+    if (rateLimitErr) return ok(rateLimitErr);
     const message = error instanceof Error ? error.message : String(error);
     return err(`Failed to get DMs: ${message}`);
   }

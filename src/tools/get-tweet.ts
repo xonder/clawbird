@@ -2,6 +2,7 @@ import { Type } from "@sinclair/typebox";
 import type { Client } from "@xdevplatform/xdk";
 import { ok, err, tweetUrl, parseTweetId } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
+import { parseRawResponse, formatRateLimit, parseRateLimitError } from "../rate-limit.js";
 
 export const getTweetSchema = Type.Object({
   tweetId: Type.String({
@@ -20,7 +21,7 @@ export async function executeGetTweet(
   }
 
   try {
-    const response = await readClient.posts.getById(resolvedId, {
+    const rawResponse = await readClient.posts.getById(resolvedId, {
       tweetFields: [
         "created_at",
         "author_id",
@@ -32,20 +33,19 @@ export async function executeGetTweet(
       ],
       expansions: ["author_id"],
       userFields: ["name", "username", "verified", "profile_image_url"],
-    });
+      requestOptions: { raw: true },
+    }) as unknown as Response;
 
-    const tweet = response?.data;
+    const { data: response, rateLimit } = await parseRawResponse<Record<string, unknown>>(rawResponse);
+
+    const tweet = response?.data as Record<string, unknown> | undefined;
     if (!tweet) {
       return err(`Tweet ${resolvedId} not found`);
     }
 
     // Extract author info from includes if available
-    const includes = (response as Record<string, unknown>)?.includes as
-      | Record<string, unknown[]>
-      | undefined;
-    const users = includes?.users as
-      | Array<Record<string, unknown>>
-      | undefined;
+    const includes = response?.includes as Record<string, unknown[]> | undefined;
+    const users = includes?.users as Array<Record<string, unknown>> | undefined;
     const author = users?.[0];
 
     const cost = ACTION_COSTS.search_per_result;
@@ -54,11 +54,11 @@ export async function executeGetTweet(
     return ok({
       id: tweet.id,
       text: tweet.text,
-      authorId: tweet.authorId,
-      createdAt: tweet.createdAt,
-      metrics: tweet.publicMetrics,
-      conversationId: tweet.conversationId,
-      inReplyToUserId: tweet.inReplyToUserId,
+      authorId: tweet.author_id,
+      createdAt: tweet.created_at,
+      metrics: tweet.public_metrics,
+      conversationId: tweet.conversation_id,
+      inReplyToUserId: tweet.in_reply_to_user_id,
       lang: tweet.lang,
       url: tweetUrl(tweet.id as string, author?.username as string | undefined),
       author: author
@@ -67,12 +67,15 @@ export async function executeGetTweet(
             name: author.name,
             username: author.username,
             verified: author.verified,
-            profileImageUrl: author.profileImageUrl ?? author.profile_image_url,
+            profileImageUrl: author.profile_image_url,
           }
         : null,
+      rateLimit: formatRateLimit(rateLimit),
       estimatedCost: `$${cost.toFixed(4)}`,
     });
   } catch (error: unknown) {
+    const rateLimitErr = parseRateLimitError(error);
+    if (rateLimitErr) return ok(rateLimitErr);
     const message = error instanceof Error ? error.message : String(error);
     return err(`Failed to get tweet: ${message}`);
   }
