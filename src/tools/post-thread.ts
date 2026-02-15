@@ -3,6 +3,7 @@ import type { Client } from "@xdevplatform/xdk";
 import { ok, err, tweetUrl } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { parseRateLimitError } from "../rate-limit.js";
+import { interactionLog } from "../interaction-log.js";
 
 export const postThreadSchema = Type.Object({
   tweets: Type.Array(Type.String({ description: "Text content of each tweet in the thread" }), {
@@ -52,6 +53,12 @@ export async function executePostThread(
 
     const cost = ACTION_COSTS.post * results.length;
     costTracker.track("post", cost);
+
+    interactionLog.log({
+      action: "x_post_thread",
+      summary: `Posted thread of ${results.length} tweets`,
+      details: { threadId: results[0].id, tweetCount: results.length, tweets: results },
+    });
 
     return ok({
       threadId: results[0].id,

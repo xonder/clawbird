@@ -4,6 +4,7 @@ import { ok, err, parseTweetId } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { getAuthenticatedUserId } from "../client.js";
 import { parseRateLimitError } from "../rate-limit.js";
+import { interactionLog } from "../interaction-log.js";
 
 export const likeTweetSchema = Type.Object({
   tweetId: Type.String({
@@ -30,6 +31,12 @@ export async function executeLikeTweet(
 
     const cost = ACTION_COSTS.like;
     costTracker.track("like", cost);
+
+    interactionLog.log({
+      action: "x_like_tweet",
+      summary: `Liked tweet ${resolvedId}`,
+      details: { tweetId: resolvedId },
+    });
 
     return ok({
       liked: true,
