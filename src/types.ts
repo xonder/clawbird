@@ -57,7 +57,7 @@ export function parseTweetId(input: string): string {
  * Strip leading @ from a username if present.
  */
 export function normalizeUsername(username: string): string {
-  return username.replace(/^@/, "").trim();
+  return username.trim().replace(/^@/, "").trim();
 }
 
 /**
