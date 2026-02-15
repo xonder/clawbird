@@ -3,6 +3,7 @@ import type { Client } from "@xdevplatform/xdk";
 import { ok, err, normalizeUsername } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { parseRateLimitError } from "../rate-limit.js";
+import { interactionLog } from "../interaction-log.js";
 
 export const sendDmSchema = Type.Object({
   username: Type.String({
@@ -51,6 +52,12 @@ export async function executeSendDm(
 
     const cost = ACTION_COSTS.dm_send;
     costTracker.track("dm_send", cost);
+
+    interactionLog.log({
+      action: "x_send_dm",
+      summary: `Sent DM to @${username}: "${params.text.substring(0, 80)}${params.text.length > 80 ? "..." : ""}"`,
+      details: { eventId, conversationId, recipientId, recipientUsername: username },
+    });
 
     return ok({
       sent: true,

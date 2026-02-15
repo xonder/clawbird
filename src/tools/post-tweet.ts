@@ -3,6 +3,7 @@ import type { Client } from "@xdevplatform/xdk";
 import { ok, err, tweetUrl } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { parseRateLimitError } from "../rate-limit.js";
+import { interactionLog } from "../interaction-log.js";
 
 export const postTweetSchema = Type.Object({
   text: Type.String({ description: "The text content of the tweet (max 280 characters)" }),
@@ -28,10 +29,17 @@ export async function executePostTweet(
     const cost = ACTION_COSTS.post;
     costTracker.track("post", cost);
 
+    const url = tweetUrl(id);
+    interactionLog.log({
+      action: "x_post_tweet",
+      summary: `Posted tweet: "${text.substring(0, 80)}${text.length > 80 ? "..." : ""}"`,
+      details: { id, text, url },
+    });
+
     return ok({
       id,
       text,
-      url: tweetUrl(id),
+      url,
       estimatedCost: `$${cost.toFixed(4)}`,
     });
   } catch (error: unknown) {

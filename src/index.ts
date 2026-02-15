@@ -13,11 +13,12 @@ import { registerSendDm } from "./tools/send-dm.js";
 import { registerGetDms } from "./tools/get-dms.js";
 import { registerFollowUser } from "./tools/follow-user.js";
 import { registerGetTweet } from "./tools/get-tweet.js";
+import { registerGetInteractionLog } from "./tools/get-interaction-log.js";
 
 /**
  * OpenClaw plugin entry point.
  *
- * Registers 12 agent tools for interacting with X/Twitter:
+ * Registers 13 agent tools for interacting with X/Twitter:
  *   - x_post_tweet       — Post a single tweet
  *   - x_post_thread      — Post a multi-tweet thread
  *   - x_reply_tweet      — Reply to a tweet by ID/URL
@@ -29,6 +30,7 @@ import { registerGetTweet } from "./tools/get-tweet.js";
  *   - x_get_dms          — Get recent direct messages
  *   - x_follow_user      — Follow a user
  *   - x_get_tweet        — Get a single tweet by ID/URL
+ *   - x_get_interaction_log — Get log of all write actions performed
  *   - x_get_cost_summary — Get cumulative API cost summary
  */
 export default function clawbird(api: {
@@ -66,5 +68,6 @@ export default function clawbird(api: {
   registerGetDms(api, getReadClient);
   registerFollowUser(api, getWriteClient, getReadClient);
   registerGetTweet(api, getReadClient);
+  registerGetInteractionLog(api);
   registerGetCostSummary(api);
 }

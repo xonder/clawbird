@@ -3,6 +3,7 @@ import type { Client } from "@xdevplatform/xdk";
 import { ok, err, tweetUrl, parseTweetId } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { parseRateLimitError } from "../rate-limit.js";
+import { interactionLog } from "../interaction-log.js";
 
 export const replyTweetSchema = Type.Object({
   tweetId: Type.String({
@@ -41,10 +42,17 @@ export async function executeReplyTweet(
     const cost = ACTION_COSTS.post;
     costTracker.track("post", cost);
 
+    const url = tweetUrl(id);
+    interactionLog.log({
+      action: "x_reply_tweet",
+      summary: `Replied to tweet ${resolvedId}: "${text.substring(0, 80)}${text.length > 80 ? "..." : ""}"`,
+      details: { id, text, url, inReplyTo: resolvedId },
+    });
+
     return ok({
       id,
       text,
-      url: tweetUrl(id),
+      url,
       inReplyTo: resolvedId,
       estimatedCost: `$${cost.toFixed(4)}`,
     });

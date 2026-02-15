@@ -4,6 +4,7 @@ import { ok, err, normalizeUsername } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { getAuthenticatedUserId } from "../client.js";
 import { parseRateLimitError } from "../rate-limit.js";
+import { interactionLog } from "../interaction-log.js";
 
 export const followUserSchema = Type.Object({
   username: Type.String({
@@ -42,6 +43,12 @@ export async function executeFollowUser(
 
     const cost = ACTION_COSTS.user_lookup;
     costTracker.track("follow", cost);
+
+    interactionLog.log({
+      action: "x_follow_user",
+      summary: `Followed @${username}`,
+      details: { userId: targetUserId, username },
+    });
 
     return ok({
       following,
