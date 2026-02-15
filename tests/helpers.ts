@@ -51,6 +51,8 @@ export function createMockClient() {
       getPosts: vi.fn(),
       getFollowers: vi.fn(),
       getFollowing: vi.fn(),
+      followUser: vi.fn(),
+      unfollowUser: vi.fn(),
     },
     directMessages: {
       createByParticipantId: vi.fn(),
