@@ -18,7 +18,7 @@ metadata:
 
 # Clawbird — X/Twitter Tools
 
-You have access to 12 tools for interacting with X (Twitter) via the official X API v2. All tools return JSON with results and estimated API cost.
+You have access to 13 tools for interacting with X (Twitter) via the official X API v2. All tools return JSON with results and estimated API cost.
 
 ## Authentication & Credentials
 
@@ -54,7 +54,7 @@ All network requests go exclusively to the official X API v2. No other hosts are
 ## Security & Privacy
 
 - **Network access:** Only `api.x.com` (official X API). No other domains are contacted.
-- **Local file access:** None. This plugin does not read, write, or access any local files, environment config, or system resources beyond the declared environment variables.
+- **Local file access:** Writes a session-scoped `clawbird-interactions.jsonl` file to the working directory, logging mutation actions (posts, likes, follows, DMs) so the agent can avoid duplicating work. No other files are read or written beyond the declared environment variables.
 - **Credential handling:** OAuth tokens are read from plugin config or env vars at runtime and passed to the X API via signed HTTP headers. They are never logged, cached to disk, or transmitted to any third party.
 - **Data sent to X:** Only the data you explicitly provide in tool parameters (tweet text, search queries, usernames, message text). No additional user data is collected or sent.
 - **Data received from X:** Tweet content, user profiles, DM messages, and engagement metrics as returned by the X API. This data is returned to the agent as JSON and not stored.
@@ -63,8 +63,7 @@ All network requests go exclusively to the official X API v2. No other hosts are
 
 Clawbird is open-source (MIT) at https://github.com/xonder/clawbird. All source code is auditable. The plugin:
 - Makes **no network requests** other than to `api.x.com`
-- Reads **no local files** (no filesystem access)
-- Stores **no data** to disk
+- Reads and writes **one local file** (`clawbird-interactions.jsonl`) for session interaction logging — no other filesystem access
 - Has **zero transitive dependencies** beyond the official `@xdevplatform/xdk` SDK and `@sinclair/typebox`
 - Includes a comprehensive test suite (180+ tests) verifiable via `npm test`
 
@@ -144,6 +143,10 @@ The following tools **modify remote state** on your X account:
 - Returns: `{ resultCount, messages: [{ id, text, senderId, createdAt, conversationId, eventType }], estimatedCost }`
 
 ### Utility
+
+**`x_get_interaction_log`** — Get the log of all write actions performed this session (posts, replies, likes, follows, DMs). Useful to review what has already been done and avoid duplicating actions.
+- `limit` (optional): Maximum number of recent entries to return (default: all)
+- Returns: `{ totalEntries, returned, logFile, entries: [{ timestamp, action, summary, details }] }`
 
 **`x_get_cost_summary`** — Get cumulative API cost for this session.
 - No parameters required
