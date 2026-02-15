@@ -73,7 +73,13 @@ export function registerPostThread(
     description:
       "Post a thread (multi-tweet sequence) to X/Twitter. Each tweet is posted as a reply to the previous one. Returns all tweet IDs, texts, and URLs.",
     parameters: postThreadSchema,
-    execute: async (_sessionId: string, params: { tweets: string[] }) =>
-      executePostThread(getWriteClient(), params),
+    execute: async (_sessionId: string, params: { tweets: string[] }) => {
+      try {
+        return await executePostThread(getWriteClient(), params);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return err(message);
+      }
+    },
   });
 }

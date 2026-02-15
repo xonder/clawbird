@@ -122,4 +122,28 @@ describe("executePostThread", () => {
     expect(data.tweetCount).toBe(1);
     expect(data.threadId).toBe("50");
   });
+
+  it("handles API throw mid-thread after some tweets posted", async () => {
+    mockClient.posts.create
+      .mockResolvedValueOnce({ data: { id: "100", text: "Tweet 1" } })
+      .mockRejectedValueOnce(new Error("Rate limit exceeded"));
+
+    const result = await executePostThread(mockClient as any, {
+      tweets: ["Tweet 1", "Tweet 2"],
+    });
+    const data = parseToolResult(result);
+
+    expect(data.error).toContain("Failed to post thread");
+    expect(data.error).toContain("Rate limit exceeded");
+  });
+
+  it("handles non-Error thrown objects", async () => {
+    mockClient.posts.create.mockRejectedValue(42);
+
+    const result = await executePostThread(mockClient as any, { tweets: ["test"] });
+    const data = parseToolResult(result);
+
+    expect(data.error).toContain("Failed to post thread");
+    expect(data.error).toContain("42");
+  });
 });

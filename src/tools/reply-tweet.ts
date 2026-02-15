@@ -65,6 +65,13 @@ export function registerReplyTweet(
     execute: async (
       _sessionId: string,
       params: { tweetId: string; text: string },
-    ) => executeReplyTweet(getWriteClient(), params),
+    ) => {
+      try {
+        return await executeReplyTweet(getWriteClient(), params);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return err(message);
+      }
+    },
   });
 }

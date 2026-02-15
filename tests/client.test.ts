@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { resolveConfig, createClients, resetCachedUserId } from "../src/client.js";
+import { resolveConfig, createClients, resetCachedUserId, getAuthenticatedUserId } from "../src/client.js";
+import { createMockClient, type MockClient } from "./helpers.js";
 
 describe("resolveConfig", () => {
   const originalEnv = { ...process.env };
@@ -119,6 +120,71 @@ describe("createClients", () => {
     });
 
     expect(clients.readClient).not.toBe(clients.writeClient);
+  });
+});
+
+describe("getAuthenticatedUserId", () => {
+  let mockClient: MockClient;
+
+  beforeEach(() => {
+    mockClient = createMockClient();
+    resetCachedUserId();
+  });
+
+  it("returns user ID from getMe response", async () => {
+    mockClient.users.getMe.mockResolvedValue({
+      data: { id: "user123", name: "Test", username: "test" },
+    });
+
+    const id = await getAuthenticatedUserId(mockClient as any);
+    expect(id).toBe("user123");
+  });
+
+  it("caches user ID across calls", async () => {
+    mockClient.users.getMe.mockResolvedValue({
+      data: { id: "cached1", name: "Cached", username: "cached" },
+    });
+
+    await getAuthenticatedUserId(mockClient as any);
+    await getAuthenticatedUserId(mockClient as any);
+    await getAuthenticatedUserId(mockClient as any);
+
+    expect(mockClient.users.getMe).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws when getMe returns no data", async () => {
+    mockClient.users.getMe.mockResolvedValue({ data: null });
+
+    await expect(getAuthenticatedUserId(mockClient as any)).rejects.toThrow(
+      "Could not retrieve authenticated user ID",
+    );
+  });
+
+  it("throws when getMe returns data without id", async () => {
+    mockClient.users.getMe.mockResolvedValue({ data: {} });
+
+    await expect(getAuthenticatedUserId(mockClient as any)).rejects.toThrow(
+      "Could not retrieve authenticated user ID",
+    );
+  });
+
+  it("cache resets after resetCachedUserId", async () => {
+    mockClient.users.getMe.mockResolvedValue({
+      data: { id: "first", name: "First", username: "first" },
+    });
+
+    const first = await getAuthenticatedUserId(mockClient as any);
+    expect(first).toBe("first");
+
+    resetCachedUserId();
+
+    mockClient.users.getMe.mockResolvedValue({
+      data: { id: "second", name: "Second", username: "second" },
+    });
+
+    const second = await getAuthenticatedUserId(mockClient as any);
+    expect(second).toBe("second");
+    expect(mockClient.users.getMe).toHaveBeenCalledTimes(2);
   });
 });
 

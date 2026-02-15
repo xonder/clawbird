@@ -76,6 +76,13 @@ export function registerSearchTweets(
     execute: async (
       _sessionId: string,
       params: { query: string; maxResults?: number },
-    ) => executeSearchTweets(getReadClient(), params),
+    ) => {
+      try {
+        return await executeSearchTweets(getReadClient(), params);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return err(message);
+      }
+    },
   });
 }

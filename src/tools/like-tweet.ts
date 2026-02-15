@@ -50,7 +50,13 @@ export function registerLikeTweet(
     description:
       "Like a tweet on X/Twitter by its ID or URL. Returns confirmation and estimated API cost.",
     parameters: likeTweetSchema,
-    execute: async (_sessionId: string, params: { tweetId: string }) =>
-      executeLikeTweet(getWriteClient(), params),
+    execute: async (_sessionId: string, params: { tweetId: string }) => {
+      try {
+        return await executeLikeTweet(getWriteClient(), params);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return err(message);
+      }
+    },
   });
 }

@@ -48,7 +48,13 @@ export function registerPostTweet(
     description:
       "Post a tweet to X/Twitter. Returns the tweet ID, text, URL, and estimated API cost.",
     parameters: postTweetSchema,
-    execute: async (_sessionId: string, params: { text: string }) =>
-      executePostTweet(getWriteClient(), params),
+    execute: async (_sessionId: string, params: { text: string }) => {
+      try {
+        return await executePostTweet(getWriteClient(), params);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return err(message);
+      }
+    },
   });
 }

@@ -97,4 +97,23 @@ describe("executePostTweet", () => {
 
     expect(data.text).toBe("My input");
   });
+
+  it("handles non-Error thrown objects", async () => {
+    mockClient.posts.create.mockRejectedValue("string error");
+
+    const result = await executePostTweet(mockClient as any, { text: "test" });
+    const data = parseToolResult(result);
+
+    expect(data.error).toContain("Failed to post tweet");
+    expect(data.error).toContain("string error");
+  });
+
+  it("handles thrown object with no message", async () => {
+    mockClient.posts.create.mockRejectedValue({ status: 429 });
+
+    const result = await executePostTweet(mockClient as any, { text: "test" });
+    const data = parseToolResult(result);
+
+    expect(data.error).toContain("Failed to post tweet");
+  });
 });

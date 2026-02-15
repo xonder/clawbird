@@ -75,7 +75,13 @@ export function registerGetUserProfile(
     description:
       "Get a user's profile information on X/Twitter by username. Returns bio, follower/following counts, tweet count, verification status, and more.",
     parameters: getUserProfileSchema,
-    execute: async (_sessionId: string, params: { username: string }) =>
-      executeGetUserProfile(getReadClient(), params),
+    execute: async (_sessionId: string, params: { username: string }) => {
+      try {
+        return await executeGetUserProfile(getReadClient(), params);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return err(message);
+      }
+    },
   });
 }

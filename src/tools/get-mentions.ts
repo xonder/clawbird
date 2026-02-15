@@ -65,7 +65,13 @@ export function registerGetMentions(
     description:
       "Get recent mentions of your authenticated X/Twitter account. Returns tweets mentioning you with metadata and estimated API cost.",
     parameters: getMentionsSchema,
-    execute: async (_sessionId: string, params: { maxResults?: number }) =>
-      executeGetMentions(getReadClient(), getWriteClient(), params),
+    execute: async (_sessionId: string, params: { maxResults?: number }) => {
+      try {
+        return await executeGetMentions(getReadClient(), getWriteClient(), params);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return err(message);
+      }
+    },
   });
 }
