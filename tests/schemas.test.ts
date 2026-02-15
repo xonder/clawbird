@@ -3,6 +3,7 @@ import { postTweetSchema } from "../src/tools/post-tweet.js";
 import { postThreadSchema } from "../src/tools/post-thread.js";
 import { replyTweetSchema } from "../src/tools/reply-tweet.js";
 import { likeTweetSchema } from "../src/tools/like-tweet.js";
+import { unlikeTweetSchema } from "../src/tools/unlike-tweet.js";
 import { searchTweetsSchema } from "../src/tools/search-tweets.js";
 import { getUserProfileSchema } from "../src/tools/get-user-profile.js";
 import { getMentionsSchema } from "../src/tools/get-mentions.js";
@@ -23,6 +24,7 @@ describe("Tool parameter schemas", () => {
     { name: "x_post_thread", schema: postThreadSchema },
     { name: "x_reply_tweet", schema: replyTweetSchema },
     { name: "x_like_tweet", schema: likeTweetSchema },
+    { name: "x_unlike_tweet", schema: unlikeTweetSchema },
     { name: "x_search_tweets", schema: searchTweetsSchema },
     { name: "x_get_user_profile", schema: getUserProfileSchema },
     { name: "x_get_mentions", schema: getMentionsSchema },
