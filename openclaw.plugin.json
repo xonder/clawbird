@@ -1,0 +1,61 @@
+{
+  "id": "clawbird",
+  "name": "Clawbird",
+  "version": "0.1.0",
+  "description": "X/Twitter integration for OpenClaw — post, reply, search, like, and monitor mentions",
+  "skills": ["skills/clawbird"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "description": "X API Key (OAuth 1.0a)"
+      },
+      "apiSecret": {
+        "type": "string",
+        "description": "X API Secret"
+      },
+      "accessToken": {
+        "type": "string",
+        "description": "X Access Token"
+      },
+      "accessTokenSecret": {
+        "type": "string",
+        "description": "X Access Token Secret"
+      },
+      "bearerToken": {
+        "type": "string",
+        "description": "X Bearer Token (optional — used for read-only operations)"
+      }
+    },
+    "required": ["apiKey", "apiSecret", "accessToken", "accessTokenSecret"]
+  },
+  "uiHints": {
+    "apiKey": {
+      "label": "API Key",
+      "sensitive": true,
+      "placeholder": "Your X API Key"
+    },
+    "apiSecret": {
+      "label": "API Secret",
+      "sensitive": true,
+      "placeholder": "Your X API Secret"
+    },
+    "accessToken": {
+      "label": "Access Token",
+      "sensitive": true,
+      "placeholder": "Your X Access Token"
+    },
+    "accessTokenSecret": {
+      "label": "Access Token Secret",
+      "sensitive": true,
+      "placeholder": "Your X Access Token Secret"
+    },
+    "bearerToken": {
+      "label": "Bearer Token",
+      "sensitive": true,
+      "placeholder": "Optional — used for read-only operations"
+    }
+  }
+}
