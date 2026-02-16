@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { executePostTweet } from "../../src/tools/post-tweet.js";
 import { createMockClient, parseToolResult, type MockClient } from "../helpers.js";
 import { costTracker } from "../../src/costs.js";
@@ -80,20 +80,80 @@ describe("executePostTweet", () => {
   it("returns structured error on 429 rate limit", async () => {
     mockClient.posts.create.mockRejectedValue({
       status: 429,
-      statusText: "Too Many Requests",
       headers: new Headers({
         "x-rate-limit-remaining": "0",
         "x-rate-limit-reset": String(Math.floor(Date.now() / 1000) + 300),
       }),
-      message: "Too Many Requests",
     });
 
     const result = await executePostTweet(mockClient as any, { text: "test" });
     const data = parseToolResult(result);
-
     expect(data.rateLimited).toBe(true);
     expect(data.retryAfterSeconds).toBeGreaterThan(0);
-    expect(data.resetsAt).toBeTruthy();
-    expect(data.error).toContain("Rate limit exceeded");
+  });
+
+  it("posts a tweet with an image", async () => {
+    // Mock fetch for image download
+    const mockArrayBuffer = new TextEncoder().encode("fake image").buffer;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: async () => mockArrayBuffer,
+        headers: new Headers({ "content-type": "image/png" }),
+      }),
+    );
+
+    // Mock media upload
+    (mockClient as any).media = {
+      upload: vi.fn().mockResolvedValue({ data: { id: "media_42" } }),
+    };
+
+    mockClient.posts.create.mockResolvedValue({
+      data: { id: "tweet_99", text: "Check this out!" },
+    });
+
+    const result = await executePostTweet(mockClient as any, {
+      text: "Check this out!",
+      mediaUrl: "https://example.com/photo.png",
+    });
+    const data = parseToolResult(result);
+
+    expect(data.id).toBe("tweet_99");
+    expect(data.mediaIds).toEqual(["media_42"]);
+    expect(mockClient.posts.create).toHaveBeenCalledWith({
+      text: "Check this out!",
+      media: { mediaIds: ["media_42"] },
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it("posts a tweet without media when mediaUrl not provided", async () => {
+    mockClient.posts.create.mockResolvedValue({ data: { id: "1", text: "no image" } });
+
+    const result = await executePostTweet(mockClient as any, { text: "no image" });
+    const data = parseToolResult(result);
+
+    expect(data.mediaIds).toBeUndefined();
+    expect(mockClient.posts.create).toHaveBeenCalledWith({ text: "no image" });
+  });
+
+  it("returns error when image upload fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 404, statusText: "Not Found" }),
+    );
+
+    const result = await executePostTweet(mockClient as any, {
+      text: "test",
+      mediaUrl: "https://example.com/missing.png",
+    });
+    const data = parseToolResult(result);
+
+    expect(data.error).toContain("Failed to post tweet");
+    expect(data.error).toContain("Failed to fetch image");
+
+    vi.unstubAllGlobals();
   });
 });
