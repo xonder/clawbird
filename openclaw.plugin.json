@@ -1,8 +1,8 @@
 {
   "id": "clawbird",
   "name": "Clawbird",
-  "version": "1.1.0",
-  "description": "X/Twitter integration for OpenClaw — post, reply, search, like, follow, DMs, and mentions via the official X API v2",
+  "version": "0.1.0",
+  "description": "X/Twitter integration for OpenClaw — post, reply, delete, search, like, unlike, follow, DMs, mentions, and image attachments via the official X API v2",
   "skills": ["."],
   "configSchema": {
     "type": "object",
