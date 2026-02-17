@@ -1,6 +1,6 @@
 # 🐦 Clawbird
 
-**OpenClaw plugin for X/Twitter** — post, reply, search, like, follow, DMs, and mentions via the official X API v2.
+**OpenClaw plugin for X/Twitter** — post, reply, delete, search, like, unlike, follow, DMs, mentions, and image attachments via the official X API v2.
 
 Built on the official [`@xdevplatform/xdk`](https://github.com/xdevplatform/twitter-api-typescript-sdk) TypeScript SDK.
 
@@ -76,28 +76,31 @@ If plugin config is not set, Clawbird falls back to these environment variables:
 
 ## Agent Tools
 
-Clawbird registers 12 agent tools, all prefixed with `x_`:
+Clawbird registers 15 agent tools, all prefixed with `x_`:
 
 | Tool | Description | Auth | Est. Cost |
 |------|-------------|------|-----------|
-| `x_post_tweet` | Post a single tweet | OAuth1 | $0.01 |
+| `x_post_tweet` | Post a tweet (optionally with image) | OAuth1 | $0.01 |
 | `x_post_thread` | Post a multi-tweet thread | OAuth1 | $0.01/tweet |
-| `x_reply_tweet` | Reply to a tweet by ID or URL | OAuth1 | $0.01 |
+| `x_reply_tweet` | Reply to a tweet (optionally with image) | OAuth1 | $0.01 |
+| `x_delete_tweet` | Delete a tweet you posted | OAuth1 | $0.01 |
 | `x_like_tweet` | Like a tweet by ID or URL | OAuth1 | $0.005 |
+| `x_unlike_tweet` | Unlike a previously liked tweet | OAuth1 | $0.005 |
+| `x_follow_user` | Follow a user by username | OAuth1 | $0.001 |
 | `x_get_tweet` | Get a single tweet by ID or URL | Bearer | $0.005 |
 | `x_search_tweets` | Search recent tweets (7 days) | Bearer | ~$0.005/result |
 | `x_get_user_profile` | Get user profile by username | Bearer | $0.001 |
 | `x_get_mentions` | Get mentions of your account | OAuth1 | ~$0.005/result |
-| `x_follow_user` | Follow a user by username | OAuth1 | $0.001 |
 | `x_send_dm` | Send a direct message to a user | OAuth1 | $0.01 |
 | `x_get_dms` | Get recent direct messages | OAuth1 | ~$0.005/result |
+| `x_get_interaction_log` | Get log of all write actions this session | — | Free |
 | `x_get_cost_summary` | Get cumulative session API costs | — | Free |
 
 ### Tool Parameters
 
-**`x_post_tweet`**
+**`x_post_tweet`** — with optional image
 ```json
-{ "text": "Hello from OpenClaw! 🦞" }
+{ "text": "Hello from OpenClaw! 🦞", "mediaUrl": "https://example.com/photo.png" }
 ```
 
 **`x_post_thread`**
@@ -105,15 +108,35 @@ Clawbird registers 12 agent tools, all prefixed with `x_`:
 { "tweets": ["Thread starts here 🧵", "Second tweet in thread", "Final tweet!"] }
 ```
 
-**`x_reply_tweet`**
+**`x_reply_tweet`** — with optional image
 ```json
-{ "tweetId": "1234567890", "text": "Great point!" }
+{ "tweetId": "1234567890", "text": "Great point!", "mediaUrl": "https://example.com/chart.png" }
 ```
 Accepts tweet IDs or full URLs (`https://x.com/user/status/1234567890`).
+
+**`x_delete_tweet`**
+```json
+{ "tweetId": "1234567890" }
+```
 
 **`x_like_tweet`**
 ```json
 { "tweetId": "1234567890" }
+```
+
+**`x_unlike_tweet`**
+```json
+{ "tweetId": "1234567890" }
+```
+
+**`x_follow_user`**
+```json
+{ "username": "@alice" }
+```
+
+**`x_get_tweet`**
+```json
+{ "tweetId": "https://x.com/Pauline_Cx/status/2022729815242215865" }
 ```
 
 **`x_search_tweets`**
@@ -131,17 +154,6 @@ Accepts tweet IDs or full URLs (`https://x.com/user/status/1234567890`).
 { "maxResults": 20 }
 ```
 
-**`x_get_tweet`**
-```json
-{ "tweetId": "https://x.com/Pauline_Cx/status/2022729815242215865" }
-```
-Also accepts bare tweet IDs: `{ "tweetId": "2022729815242215865" }`
-
-**`x_follow_user`**
-```json
-{ "username": "@alice" }
-```
-
 **`x_send_dm`**
 ```json
 { "username": "@alice", "text": "Hey, check out our latest release!" }
@@ -153,65 +165,60 @@ Also accepts bare tweet IDs: `{ "tweetId": "2022729815242215865" }`
 ```
 Omit `username` to get all recent DMs.
 
-**`x_get_cost_summary`** — No parameters needed.
+**`x_get_interaction_log`** — review what actions have been taken
+```json
+{ "limit": 10 }
+```
+
+**`x_get_cost_summary`**
 ```json
 {}
 ```
-Returns total session cost and per-action breakdown.
 
-### Cost Tracking
+### Rate Limits & Cost Tracking
 
-Every tool response includes an `estimatedCost` field showing the approximate X API cost for that operation. This helps agents and users stay aware of API spending.
+- **Rate limit info** is returned on every read tool response as `rateLimit: { remaining, limit, resetsAt }`
+- **429 errors** are caught and returned as `{ rateLimited: true, retryAfterSeconds, resetsAt }`
+- **Cost tracking** via `estimatedCost` on every response and `x_get_cost_summary` for session totals
+- **Interaction log** tracks all write actions to `clawbird-interactions.jsonl` — query via `x_get_interaction_log`
+
+### Image Support
+
+`x_post_tweet` and `x_reply_tweet` accept an optional `mediaUrl` parameter:
+- Supports image URLs (fetched automatically) and local file paths
+- Formats: JPEG, PNG, WebP, BMP, TIFF (max 5MB)
+- The image is uploaded via the X media API and attached to the tweet
 
 ## Skill
 
-Clawbird ships a `SKILL.md` that teaches agents how to use the tools effectively, including:
-- Parameter documentation for all 7 tools
-- Search query syntax (operators, hashtags, filters)
-- Thread formatting best practices
-- Rate limit guidance
-- Cost awareness tips
+Clawbird ships a `SKILL.md` that teaches agents how to use all 15 tools effectively, including parameter docs, search query syntax, thread formatting, rate limit guidance, and cost awareness.
 
 ## Development
 
 ```bash
-# Install dependencies
-npm install
-
-# Typecheck
-npm run typecheck
-
-# Run tests
-npm test
-
-# Build
-npm run build
-
-# Watch mode
-npm run dev
+npm install       # Install dependencies
+npm run typecheck  # Type check
+npm test          # Run tests (240+ tests)
+npm run build     # Build to dist/
+npm run dev       # Watch mode
 ```
 
 ### Project Structure
 
 ```
 clawbird/
-├── openclaw.plugin.json    # Plugin manifest
+├── openclaw.plugin.json     # Plugin manifest
+├── SKILL.md                 # Agent skill instructions
 ├── src/
-│   ├── index.ts            # Plugin entry point
-│   ├── client.ts           # X API client factory
-│   ├── costs.ts            # Cost tracking
-│   ├── types.ts            # Shared types & helpers
-│   └── tools/              # One file per tool
-│       ├── post-tweet.ts
-│       ├── post-thread.ts
-│       ├── reply-tweet.ts
-│       ├── like-tweet.ts
-│       ├── search-tweets.ts
-│       ├── get-user-profile.ts
-│       └── get-mentions.ts
-├── skills/clawbird/
-│   └── SKILL.md            # Agent instructions
-└── tests/                  # Vitest test suite
+│   ├── index.ts             # Plugin entry point (15 tools)
+│   ├── client.ts            # X API client factory
+│   ├── costs.ts             # Cost tracking
+│   ├── rate-limit.ts        # Rate limit header parsing
+│   ├── media.ts             # Image upload helper
+│   ├── interaction-log.ts   # Mutation action logger
+│   ├── types.ts             # Shared types & helpers
+│   └── tools/               # One file per tool (15 files)
+└── tests/                   # Vitest test suite (240+ tests)
 ```
 
 ## License
