@@ -193,6 +193,16 @@ Omit `username` to get all recent DMs.
 
 Clawbird ships a `SKILL.md` that teaches agents how to use all 15 tools effectively, including parameter docs, search query syntax, thread formatting, rate limit guidance, and cost awareness.
 
+## Related OpenClaw Workflows
+
+Clawbird is the direct X API v2 plugin for teams that use their own X developer app. If your OpenClaw agent needs broader X/Twitter automation through Xquik, install [TweetClaw](https://github.com/Xquik-dev/tweetclaw):
+
+```bash
+openclaw plugins install @xquik/tweetclaw
+```
+
+Use TweetClaw for scrape tweets, search tweet replies, follower export, user lookup, media download, monitor tweets, webhooks, giveaway draws, and approval-gated post tweets or post tweet replies. Keep Clawbird as the direct X API v2 path for this repo's 15 tools.
+
 ## Development
 
 ```bash
