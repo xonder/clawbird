@@ -7,6 +7,8 @@ export interface ClawbirdConfig {
   accessToken: string;
   accessTokenSecret: string;
   bearerToken?: string;
+  readProvider?: "x" | "xquik";
+  xquikApiKey?: string;
 }
 
 /**
@@ -69,4 +71,6 @@ export const ENV_KEYS = {
   accessToken: "X_ACCESS_TOKEN",
   accessTokenSecret: "X_ACCESS_SECRET",
   bearerToken: "X_BEARER_TOKEN",
+  readProvider: "X_READ_PROVIDER",
+  xquikApiKey: "XQUIK_API_KEY",
 } as const;

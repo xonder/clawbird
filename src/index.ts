@@ -60,6 +60,16 @@ export default function clawbird(api: {
     return ensureClients().readClient;
   }
 
+  function getXquikSearchConfig() {
+    return {
+      apiKey: api.pluginConfig?.xquikApiKey ?? process.env.XQUIK_API_KEY,
+      provider: api.pluginConfig?.readProvider ?? process.env.X_READ_PROVIDER as
+        | "x"
+        | "xquik"
+        | undefined,
+    };
+  }
+
   // Register all tools
   registerPostTweet(api, getWriteClient);
   registerPostThread(api, getWriteClient);
@@ -67,7 +77,7 @@ export default function clawbird(api: {
   registerLikeTweet(api, getWriteClient);
   registerUnlikeTweet(api, getWriteClient);
   registerDeleteTweet(api, getWriteClient);
-  registerSearchTweets(api, getReadClient);
+  registerSearchTweets(api, getReadClient, getXquikSearchConfig);
   registerGetUserProfile(api, getReadClient);
   registerGetMentions(api, getReadClient, getWriteClient);
   registerSendDm(api, getWriteClient, getReadClient);
