@@ -4,6 +4,13 @@ import { ok, err, tweetUrl } from "../types.js";
 import { ACTION_COSTS, costTracker } from "../costs.js";
 import { parseRawResponse, formatRateLimit, parseRateLimitError } from "../rate-limit.js";
 
+const XQUIK_SEARCH_URL = "https://xquik.com/api/v1/x/tweets/search";
+
+interface XquikSearchConfig {
+  apiKey?: string;
+  provider?: "x" | "xquik";
+}
+
 export const searchTweetsSchema = Type.Object({
   query: Type.String({
     description:
@@ -18,12 +25,79 @@ export const searchTweetsSchema = Type.Object({
   ),
 });
 
-export async function executeSearchTweets(
-  readClient: Client,
+async function executeXquikSearchTweets(
+  config: XquikSearchConfig,
   params: { query: string; maxResults?: number },
+) {
+  if (!config.apiKey) {
+    return err("XQUIK_API_KEY is required when X_READ_PROVIDER=xquik");
+  }
+
+  const maxResults = params.maxResults ?? 10;
+  const url = new URL(XQUIK_SEARCH_URL);
+  url.searchParams.set("q", params.query);
+  url.searchParams.set("queryType", "Latest");
+  url.searchParams.set("limit", String(maxResults));
+
+  const response = await fetch(url, {
+    headers: { "X-API-Key": config.apiKey },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    return err(`Xquik search failed: ${response.status}`, text.slice(0, 200));
+  }
+
+  const payload = await response.json() as {
+    tweets?: Array<Record<string, unknown>>;
+    has_next_page?: boolean;
+    next_cursor?: string;
+  };
+  const tweetsData = payload.tweets ?? [];
+  const tweets = tweetsData.map((tweet) => {
+    const author = tweet.author as Record<string, unknown> | undefined;
+    const username = author?.username ?? author?.userName ?? "i";
+    return {
+      id: tweet.id,
+      text: tweet.text,
+      authorId: author?.id,
+      authorUsername: username,
+      createdAt: tweet.createdAt,
+      metrics: {
+        likes: tweet.likeCount,
+        retweets: tweet.retweetCount,
+        replies: tweet.replyCount,
+        quotes: tweet.quoteCount,
+      },
+      url: tweet.url ?? tweetUrl(String(tweet.id), String(username)),
+    };
+  });
+
+  return ok({
+    query: params.query,
+    resultCount: tweets.length,
+    tweets,
+    hasNextPage: Boolean(payload.has_next_page),
+    nextCursor: payload.next_cursor,
+    provider: "xquik",
+  });
+}
+
+export async function executeSearchTweets(
+  readClient: Client | undefined,
+  params: { query: string; maxResults?: number },
+  xquikConfig: XquikSearchConfig = {},
 ) {
   if (!params.query || params.query.trim().length === 0) {
     return err("Search query cannot be empty");
+  }
+
+  if (xquikConfig.provider === "xquik") {
+    return executeXquikSearchTweets(xquikConfig, params);
+  }
+
+  if (!readClient) {
+    return err("X read client is required when X_READ_PROVIDER is not xquik");
   }
 
   const maxResults = params.maxResults ?? 10;
@@ -74,6 +148,7 @@ export async function executeSearchTweets(
 export function registerSearchTweets(
   api: { registerTool: Function },
   getReadClient: () => Client,
+  getXquikConfig: () => XquikSearchConfig = () => ({}),
 ) {
   api.registerTool({
     name: "x_search_tweets",
@@ -85,7 +160,10 @@ export function registerSearchTweets(
       params: { query: string; maxResults?: number },
     ) => {
       try {
-        return await executeSearchTweets(getReadClient(), params);
+        const xquikConfig = getXquikConfig();
+        const readClient =
+          xquikConfig.provider === "xquik" ? undefined : getReadClient();
+        return await executeSearchTweets(readClient, params, xquikConfig);
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         return err(message);

@@ -27,6 +27,15 @@
       "bearerToken": {
         "type": "string",
         "description": "X Bearer Token (optional — used for read-only operations)"
+      },
+      "readProvider": {
+        "type": "string",
+        "enum": ["x", "xquik"],
+        "description": "Read provider for tweet search. Defaults to X."
+      },
+      "xquikApiKey": {
+        "type": "string",
+        "description": "Xquik API key for optional read-only tweet search"
       }
     },
     "required": ["apiKey", "apiSecret", "accessToken", "accessTokenSecret"]
@@ -56,6 +65,15 @@
       "label": "Bearer Token",
       "sensitive": true,
       "placeholder": "Optional — used for read-only operations"
+    },
+    "readProvider": {
+      "label": "Read Provider",
+      "placeholder": "x"
+    },
+    "xquikApiKey": {
+      "label": "Xquik API Key",
+      "sensitive": true,
+      "placeholder": "Optional read-only search key"
     }
   }
 }

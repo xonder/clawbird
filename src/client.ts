@@ -28,6 +28,13 @@ export function resolveConfig(
       "",
     bearerToken:
       pluginConfig?.bearerToken ?? process.env[ENV_KEYS.bearerToken],
+    readProvider:
+      pluginConfig?.readProvider ?? process.env[ENV_KEYS.readProvider] as
+        | "x"
+        | "xquik"
+        | undefined,
+    xquikApiKey:
+      pluginConfig?.xquikApiKey ?? process.env[ENV_KEYS.xquikApiKey],
   };
 
   if (!cfg.apiKey || !cfg.apiSecret || !cfg.accessToken || !cfg.accessTokenSecret) {
